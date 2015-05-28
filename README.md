@@ -3,7 +3,7 @@ A python script for converting voltage to temperature units and vice versa.
 * All voltage is measured in millivolts (mV)
 * All temperature measurements are in degrees Celcius
 
-Conversion formulae used are taken from [NIST thermocouple tables and coefficients](http://srdata.nist.gov/its90/main/)
+Conversion formulae used are taken from [NIST thermocouple tables and coefficients](http://srdata.nist.gov/its90/main/). You can view this data in the file `allcoeff.tab`
 
 No warranty given or implied whatsoever with this tool. Use at your own risk.
 
@@ -25,7 +25,7 @@ Convert 0.1, 0.2, 0.3 mV type K to temperature
 
     ./py.tc --mode v2k 0.1 0.2 0.3
 
-Covert tempratures 0, 50, 100 to type N millivolts
+Convert temperatures 0, 50, 100 to type N millivolts
 
     ./py.tc --mode n2v 0 50 100
 
