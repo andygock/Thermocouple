@@ -3,7 +3,7 @@ A python script for converting voltage to temperature units and vice versa.
 * All voltage is measured in millivolts (mV)
 * All temperature measurements are in degrees Celcius
 
-Conversion formulae used are on [NIST coefficients](http://srdata.nist.gov/its90/main/)
+Conversion formulae used are taken from [NIST thermocouple tables and coefficients](http://srdata.nist.gov/its90/main/)
 
 No warranty given or implied whatsoever with this tool. Use at your own risk.
 
