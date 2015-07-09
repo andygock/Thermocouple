@@ -8,6 +8,8 @@
 import math
 import argparse
 import sys
+import re
+import traceback
 
 class Thermocouple:
     def __init__(self):
@@ -808,6 +810,22 @@ class Thermocouple:
 
         return t
 
+def meter(meter, mv):
+    if meter == 'u1272a':
+        # Accordance with Agilent U1272A 4.5 digit DMM, DC specifications
+        if mv <= 30:
+            upper = mv * 1.0005 + 0.020
+            lower = mv * 0.9995 - 0.020
+        elif 30 < mv <= 300:
+            upper = mv * 1.0005 + 0.05
+            lower = mv * 0.9995 - 0.05
+        else:
+            raise ValueError("Voltage out of range for --accuracy option.")
+    else:
+        raise ValueError("Invalid meter type for the --accuracy option. Use the --help option for more information.")
+
+    return [lower, mv, upper]
+
 
 if __name__ == "__main__":
 
@@ -821,29 +839,49 @@ if __name__ == "__main__":
     parser.add_argument('values', nargs='*', type=float)
     parser.add_argument('--offset', nargs=1, default=[0.0], type=float)
     parser.add_argument('--mode', nargs=1, default=['v2k'], choices=choices)
+    parser.add_argument('--meter', nargs=1, type=str)
     args = parser.parse_args()
-    # print args
+    #print args
 
     offset = args.offset[0]
 
     convert_function = None
 
     for tc in tctypes:
-        if args.mode[0] == 'v2' + tc:
-            convert_function = 'mv_to_type' + tc
-        elif args.mode[0] == tc + '2v':
-            convert_function = 'type' + tc + '_to_mv'
+        if args.mode:
+            if args.mode[0] == 'v2' + tc:
+                convert_function = 'mv_to_type' + tc
+            elif args.mode[0] == tc + '2v':
+                convert_function = 'type' + tc + '_to_mv'
+        else:
+            # should never reach here, as we set ['v2k'] as default for args.mode in parser
+            pass
     convert_function = getattr(Thermocouple, convert_function)
+
+    if re.match(r"^v2", args.mode[0]):
+        output_decimal_places = 1
+    else:
+        output_decimal_places = 4
 
     error_count = 0
     for v in args.values:
         try:
+            if args.meter and args.meter[0] and re.match(r"^v2", args.mode[0]):
+                v_range = meter(args.meter[0], v)
+                lower = convert_function(v_range[0]) + offset
+                mid = convert_function(v_range[1]) + offset
+                upper = convert_function(v_range[2]) + offset
+                print "{0:.1f} (uncertainty: {1:.1f} to {2:.1f})".format(mid, lower, upper)
+            else:
+                if output_decimal_places == 1:
+                    print "{0:.1f}".format(convert_function(v) + offset)
+                elif output_decimal_places == 4:
+                    print "{0:.4f}".format(convert_function(v) + offset)
 
-            print "{0:.4f}".format(convert_function(v) + offset)
         except Exception as ex:
-            #print "Converting {}".format(v)
-            #print ex
-            print "ERROR:{}".format(v)
+            print "ERROR occured while converting: {}".format(v)
+            print traceback.format_exc()
+            #print ex.message
             error_count += 1
 
     if error_count > 0:

@@ -25,6 +25,11 @@ Convert 0.1, 0.2, 0.3 mV type K to temperature
 
     ./py.tc --mode v2k 0.1 0.2 0.3
 
+Convert 0.1, 0.2, 0.3 mV type K to temperature, and show uncertainty when measurements are made from a Agilent
+U1272A DMM
+
+    ./py.tc --meter u1272a --mode v2k 0.1 0.2 0.3
+
 Convert temperatures 0, 50, 100 to type N millivolts
 
     ./py.tc --mode n2v 0 50 100
