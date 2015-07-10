@@ -811,18 +811,63 @@ class Thermocouple:
         return t
 
 def meter(meter, mv):
-    if meter == 'u1272a':
-        # Accordance with Agilent U1272A 4.5 digit DMM, DC specifications
-        if mv <= 30:
+
+    if meter == 'u1272a' or meter == 'u1271a':
+        # Accordance with Agilent U1271A, U1272A 30,000 count DMM, DC specifications
+        if mv < 30:
+            # 30mV range, 0.001 mV resolution
             upper = mv * 1.0005 + 0.020
             lower = mv * 0.9995 - 0.020
-        elif 30 < mv <= 300:
+        elif 30 <= mv < 300:
+            # 300mV range, 0.01 mV resolution
             upper = mv * 1.0005 + 0.05
             lower = mv * 0.9995 - 0.05
+        elif 300 <= mv < 3000:
+            # 3V range, 0.1 mV resolution
+            upper = mv * 1.0005 + 0.5
+            lower = mv * 0.9995 - 0.5
         else:
-            raise ValueError("Voltage out of range for --accuracy option.")
+            raise ValueError("Voltage out of range for selected meter.")
+
+    elif meter == '187' or meter == '189':
+        # Fluke 187 or 189, 50,000 count DMM, DC specifications
+        if mv < 50:
+            # 50mV range, 0.001 mV resolution
+            upper = mv * 1.001 + 0.020
+            lower = mv * 0.999 - 0.020
+        elif 50 <= mv < 500:
+            # 500mV range, 0.01 mV resolution
+            upper = mv * 1.0003 + 0.02
+            lower = mv * 0.9997 - 0.02
+        elif 500 <= mv < 3000:
+            # 3V range, 0.1 mV resolution
+            upper = mv * 1.00025 + 0.5
+            lower = mv * 0.99975 - 0.5
+        else:
+            raise ValueError("Voltage out of range for selected meter.")
+
+    elif meter == '83v':
+        # Fluke 83 Series V
+        if mv < 600:
+            # 600 mV range, 0.1 mV resolution
+            upper = mv * 1.003 + 0.1
+            lower = mv * 0.997 - 0.1
+        else:
+            raise ValueError("Voltage out of range for selected meter.")
+
+    elif meter == '87v':
+        # Fluke 87 Series V
+        if mv < 600:
+            # 600 mV range, 0.1 mV resolution
+            upper = mv * 1.001 + 0.1
+            lower = mv * 0.991 - 0.1
+        else:
+            raise ValueError("Voltage out of range for selected meter.")
+
+
     else:
-        raise ValueError("Invalid meter type for the --accuracy option. Use the --help option for more information.")
+        # Shouldn't reach here anyway! ArgumentParser.add_argument() takes care of this.
+        raise ValueError("Invalid meter type for the --meter option. Use the --help option for more information.")
 
     return [lower, mv, upper]
 
@@ -839,7 +884,7 @@ if __name__ == "__main__":
     parser.add_argument('values', nargs='*', type=float)
     parser.add_argument('--offset', nargs=1, default=[0.0], type=float)
     parser.add_argument('--mode', nargs=1, default=['v2k'], choices=choices)
-    parser.add_argument('--meter', nargs=1, type=str)
+    parser.add_argument('--meter', nargs=1, type=str, choices=['u1271a', 'u1272a', '187', '189', '83v', '87v'])
     args = parser.parse_args()
     #print args
 
