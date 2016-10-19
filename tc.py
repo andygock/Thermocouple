@@ -881,7 +881,7 @@ if __name__ == "__main__":
         choices.append(tc + '2v')
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('values', nargs='*', type=float)
+    parser.add_argument('values', nargs='+', type=float)
     parser.add_argument('--offset', nargs=1, default=[0.0], type=float)
     parser.add_argument('--mode', nargs=1, default=['v2k'], choices=choices)
     parser.add_argument('--meter', nargs=1, type=str, choices=['u1271a', 'u1272a', '187', '189', '83v', '87v'])
@@ -916,16 +916,16 @@ if __name__ == "__main__":
                 lower = convert_function(v_range[0]) + offset
                 mid = convert_function(v_range[1]) + offset
                 upper = convert_function(v_range[2]) + offset
-                print "{0:.1f} (uncertainty: {1:.1f} to {2:.1f})".format(mid, lower, upper)
+                print("{0:.1f} (uncertainty: {1:.1f} to {2:.1f})".format(mid, lower, upper))
             else:
                 if output_decimal_places == 1:
-                    print "{0:.1f}".format(convert_function(v) + offset)
+                    print("{0:.1f}".format(convert_function(v) + offset))
                 elif output_decimal_places == 4:
-                    print "{0:.4f}".format(convert_function(v) + offset)
+                    print("{0:.4f}".format(convert_function(v) + offset))
 
         except Exception as ex:
-            print "ERROR occured while converting: {}".format(v)
-            print traceback.format_exc()
+            print("ERROR occured while converting: {}".format(v))
+            print(traceback.format_exc())
             #print ex.message
             error_count += 1
 
