@@ -169,7 +169,7 @@ class Thermocouple:
             1.0629823E-11,
             -3.2447087E-14,
         ]
-        if -8 <= mv <= 0.0:
+        if -8.825 <= mv <= 0.0:
             c = tab1
         elif 0.0 < mv <= 76.373:
             c = tab2
@@ -864,7 +864,6 @@ def meter(meter, mv):
         else:
             raise ValueError("Voltage out of range for selected meter.")
 
-
     else:
         # Shouldn't reach here anyway! ArgumentParser.add_argument() takes care of this.
         raise ValueError("Invalid meter type for the --meter option. Use the --help option for more information.")
@@ -876,57 +875,71 @@ if __name__ == "__main__":
 
     tctypes = ['b', 'e', 'j', 'k', 'n', 'r', 's', 't']
     choices = []
+
     for tc in tctypes:
-        choices.append('v2' + tc)
-        choices.append(tc + '2v')
+        choices.append('mv2' + tc)
+        choices.append(tc + '2mv')
 
     parser = argparse.ArgumentParser()
     parser.add_argument('values', nargs='+', type=float)
-    parser.add_argument('--offset', nargs=1, default=[0.0], type=float)
-    parser.add_argument('--mode', nargs=1, default=['v2k'], choices=choices)
+    parser.add_argument('--offset-input', nargs=1, default=[0.0], type=float)
+    parser.add_argument('--offset-output', nargs=1, default=[0.0], type=float)
+    parser.add_argument('--mode', nargs=1, default=['mv2k'], choices=choices)
     parser.add_argument('--meter', nargs=1, type=str, choices=['u1271a', 'u1272a', '187', '189', '83v', '87v'])
     args = parser.parse_args()
-    #print args
+    # print(args); sys.exit(1)
 
-    offset = args.offset[0]
+    offset_input = args.offset_input[0]
+    offset_output = args.offset_output[0]
 
     convert_function = None
 
     for tc in tctypes:
         if args.mode:
-            if args.mode[0] == 'v2' + tc:
+            if args.mode[0] == 'mv2' + tc:
                 convert_function = 'mv_to_type' + tc
-            elif args.mode[0] == tc + '2v':
+            elif args.mode[0] == tc + '2mv':
                 convert_function = 'type' + tc + '_to_mv'
         else:
             # should never reach here, as we set ['v2k'] as default for args.mode in parser
             pass
     convert_function = getattr(Thermocouple, convert_function)
 
-    if re.match(r"^v2", args.mode[0]):
+    if re.match(r"^mv2", args.mode[0]):
+        # voltage to temperature mode
         output_decimal_places = 1
     else:
-        output_decimal_places = 4
+        # temperature to voltage mode
+        output_decimal_places = 3
 
     error_count = 0
     for v in args.values:
+
         try:
-            if args.meter and args.meter[0] and re.match(r"^v2", args.mode[0]):
-                v_range = meter(args.meter[0], v)
-                lower = convert_function(v_range[0]) + offset
-                mid = convert_function(v_range[1]) + offset
-                upper = convert_function(v_range[2]) + offset
+            if args.meter and args.meter[0] and re.match(r"^mv2", args.mode[0]):
+                # voltage to temperature in meter mode
+                v_range = meter(args.meter[0], v + offset_input)
+                lower = convert_function(v_range[0] + offset_input) + offset_output
+                mid = convert_function(v_range[1]  + offset_input) + offset_output
+                upper = convert_function(v_range[2] + offset_input) + offset_output
                 print("{0:.1f} (uncertainty: {1:.1f} to {2:.1f})".format(mid, lower, upper))
+
             else:
+                
                 if output_decimal_places == 1:
-                    print("{0:.1f}".format(convert_function(v) + offset))
-                elif output_decimal_places == 4:
-                    print("{0:.4f}".format(convert_function(v) + offset))
+                    # voltage to temperature mode
+                    output = convert_function(v + offset_input) + offset_output
+                    print("{0:.1f}".format(output))
+
+                elif output_decimal_places == 3:
+                    # temperature to voltage mode
+                    output = convert_function(v + offset_input) + offset_output
+                    print("{0:.3f}".format(output))
 
         except Exception as ex:
-            print("ERROR occured while converting: {}".format(v))
-            print(traceback.format_exc())
-            #print ex.message
+            print("Error with {}: {}".format(v + offset_input, ex.message))
+            # print(traceback.format_exc()) # debugging mode only
+            # print ex.message
             error_count += 1
 
     if error_count > 0:
